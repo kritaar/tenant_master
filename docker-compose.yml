@@ -6,7 +6,7 @@ services:
     container_name: tenant-master
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       # Django settings
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me-in-production}
