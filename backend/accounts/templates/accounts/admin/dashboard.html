@@ -1,0 +1,329 @@
+{% extends 'accounts/admin/base_admin.html' %}
+
+{% block title %}Dashboard Admin - Tenant Master{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">
+            <i class="fas fa-chart-line text-indigo-600 mr-3"></i>Panel de Administración
+        </h1>
+        <p class="mt-2 text-sm text-gray-600">Gestiona todos los workspaces y bases de datos del sistema</p>
+    </div>
+
+    <!-- Estadísticas Principales -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div class="bg-white overflow-hidden shadow-lg rounded-lg border-l-4 border-indigo-500">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-folder text-4xl text-indigo-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Workspaces</dt>
+                            <dd class="text-3xl font-bold text-gray-900">{{ total_workspaces }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-lg rounded-lg border-l-4 border-green-500">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-4xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Activos</dt>
+                            <dd class="text-3xl font-bold text-gray-900">{{ active_workspaces }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-lg rounded-lg border-l-4 border-yellow-500">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-pause-circle text-4xl text-yellow-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Pausados</dt>
+                            <dd class="text-3xl font-bold text-gray-900">{{ paused_workspaces }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-lg rounded-lg border-l-4 border-purple-500">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-database text-4xl text-purple-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Tamaño Total BD</dt>
+                            <dd class="text-2xl font-bold text-gray-900">{{ total_db_size }} MB</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workspaces por Producto -->
+    <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <i class="fas fa-chart-pie text-indigo-600 mr-2"></i>Distribución por Producto
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for product in workspaces_by_product %}
+            <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-500 hover:shadow-md transition">
+                <div class="text-center">
+                    <span class="text-5xl">{{ product.icon }}</span>
+                    <h3 class="mt-3 text-lg font-semibold text-gray-900">{{ product.display_name }}</h3>
+                    <p class="text-3xl font-bold text-indigo-600 mt-2">{{ product.workspace_count }}</p>
+                    <p class="text-xs text-gray-500">workspaces</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    {% if expiring_soon %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">
+                    ⚠️ Suscripciones Próximas a Expirar ({{ expiring_soon.count }})
+                </h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                        {% for ws in expiring_soon|slice:":5" %}
+                        <li>
+                            <a href="{% url 'admin_workspace_detail' ws.id %}" class="hover:underline font-medium">
+                                {{ ws.company_name }}
+                            </a> - {{ ws.days_remaining }} días restantes
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filtros -->
+    <div class="bg-white shadow-lg rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-filter text-indigo-600 mr-2"></i>Filtros
+        </h2>
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Producto</label>
+                    <select name="product" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">Todos</option>
+                        {% for product in products %}
+                        <option value="{{ product.name }}" {% if current_product == product.name %}selected{% endif %}>
+                            {{ product.display_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Plan</label>
+                    <select name="plan" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">Todos</option>
+                        <option value="free" {% if current_plan == 'free' %}selected{% endif %}>Gratuito</option>
+                        <option value="starter" {% if current_plan == 'starter' %}selected{% endif %}>Starter</option>
+                        <option value="business" {% if current_plan == 'business' %}selected{% endif %}>Business</option>
+                        <option value="enterprise" {% if current_plan == 'enterprise' %}selected{% endif %}>Enterprise</option>
+                        <option value="lifetime" {% if current_plan == 'lifetime' %}selected{% endif %}>Vitalicio</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                    <select name="status" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">Todos</option>
+                        <option value="active" {% if current_status == 'active' %}selected{% endif %}>Activo</option>
+                        <option value="paused" {% if current_status == 'paused' %}selected{% endif %}>Pausado</option>
+                        <option value="suspended" {% if current_status == 'suspended' %}selected{% endif %}>Suspendido</option>
+                        <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Cancelado</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+                    <input type="text" 
+                           name="search" 
+                           value="{{ current_search }}" 
+                           placeholder="Empresa, subdominio..." 
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'admin_dashboard' %}" 
+                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-times mr-2"></i>Limpiar
+                </a>
+                <button type="submit" 
+                        class="px-6 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700">
+                    <i class="fas fa-search mr-2"></i>Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de Workspaces -->
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-list text-indigo-600 mr-2"></i>Todos los Workspaces ({{ workspaces.count }})
+            </h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BD Size</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for workspace in workspaces %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ workspace.company_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ workspace.full_subdomain }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-2xl">{{ workspace.product.icon }}</span>
+                            <div class="text-sm text-gray-900">{{ workspace.product.display_name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if workspace.plan_type == 'lifetime' %}bg-purple-100 text-purple-800
+                                {% elif workspace.plan_type == 'enterprise' %}bg-blue-100 text-blue-800
+                                {% elif workspace.plan_type == 'business' %}bg-green-100 text-green-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ workspace.get_plan_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if workspace.status == 'active' %}bg-green-100 text-green-800
+                                {% elif workspace.status == 'paused' %}bg-yellow-100 text-yellow-800
+                                {% elif workspace.status == 'suspended' %}bg-orange-100 text-orange-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ workspace.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if workspace.db_size_mb > 0 %}
+                                {{ workspace.db_size_mb|floatformat:2 }} MB
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ workspace.created_at|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <a href="{% url 'admin_workspace_detail' workspace.id %}" 
+                               class="text-indigo-600 hover:text-indigo-900" 
+                               title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if workspace.status == 'active' %}
+                            <a href="{% url 'admin_workspace_action' workspace.id 'pause' %}" 
+                               class="text-yellow-600 hover:text-yellow-900" 
+                               title="Pausar"
+                               onclick="return confirm('¿Pausar este workspace?')">
+                                <i class="fas fa-pause"></i>
+                            </a>
+                            {% elif workspace.status == 'paused' %}
+                            <a href="{% url 'admin_workspace_action' workspace.id 'resume' %}" 
+                               class="text-green-600 hover:text-green-900" 
+                               title="Reanudar">
+                                <i class="fas fa-play"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'admin_workspace_action' workspace.id 'backup' %}" 
+                               class="text-blue-600 hover:text-blue-900" 
+                               title="Crear backup"
+                               onclick="return confirm('¿Crear backup de la base de datos?')">
+                                <i class="fas fa-save"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-3"></i>
+                            <p>No se encontraron workspaces</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Actividad Reciente -->
+    <div class="bg-white shadow-lg rounded-lg p-6 mt-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-history text-indigo-600 mr-2"></i>Actividad Reciente
+            </h2>
+            <a href="{% url 'admin_activity_log' %}" class="text-sm text-indigo-600 hover:text-indigo-800">
+                Ver todo <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        <div class="space-y-3">
+            {% for activity in recent_activity|slice:":10" %}
+            <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <div class="flex-shrink-0 mt-1">
+                    <i class="fas fa-{{ activity.action }} text-gray-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-900">
+                        <span class="font-medium">{{ activity.user.username }}</span>
+                        {{ activity.description }}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        {{ activity.created_at|date:"d/m/Y H:i" }} - {{ activity.ip_address }}
+                    </p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-center text-gray-500 py-4">No hay actividad reciente</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
