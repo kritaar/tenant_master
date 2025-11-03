@@ -25,8 +25,8 @@ def register(request):
                 
                 # 2. Obtener datos del formulario
                 product = form.cleaned_data['product']
-                subdomain = form.cleaned_data['subdomain']
                 company_name = form.cleaned_data['company_name']
+                subdomain = form.get_subdomain()  # Auto-generado desde company_name
                 
                 # 3. Crear base de datos del tenant
                 logger.info(f"Creando BD para tenant: {subdomain}")
