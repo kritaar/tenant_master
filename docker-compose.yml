@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 services:
   tenant-master:
@@ -7,30 +7,32 @@ services:
     restart: unless-stopped
     ports:
       - "8001:8000"
-    environment:
-      # Django settings
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me-in-production}
-      DJANGO_DEBUG: ${DJANGO_DEBUG:-0}
-      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-app.kitagli.com,kitagli.com,localhost,127.0.0.1}
-      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://app.kitagli.com,https://kitagli.com}
-      
-      # Database settings
-      PGDATABASE: ${PGDATABASE:-tenant_master}
-      PGUSER: ${PGUSER:-admin}
-      PGPASSWORD: ${PGPASSWORD:-1234}
-      PGHOST: ${PGHOST:-postgres16}
-      PGPORT: ${PGPORT:-5432}
-      
-      # Tenant configuration
-      TENANT_DOMAIN: ${TENANT_DOMAIN:-kitagli.com}
-      
-      # Timezone
-      TZ: America/Lima
+    env_file:
+      - .env
     volumes:
-      - /opt/databases/postgresql:/opt/databases/postgresql  # Montar scripts de BD
+      - ./backend:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     networks:
       - tenant-network
+    depends_on:
+      - postgres16
+    command: >
+      sh -c "
+        python manage.py migrate --noinput &&
+        python manage.py collectstatic --noinput &&
+        gunicorn config.wsgi:application 
+          --bind 0.0.0.0:8000 
+          --workers 3 
+          --timeout 120 
+          --access-logfile - 
+          --error-logfile -
+      "
 
 networks:
   tenant-network:
     external: true
+
+volumes:
+  static_volume:
+  media_volume:

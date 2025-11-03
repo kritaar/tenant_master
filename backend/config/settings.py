@@ -1,28 +1,26 @@
 """
-Django settings for tenant-master project.
-Panel de administración de workspaces multi-tenant.
+Django settings for Tenant Master project.
 """
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
+
+# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key-change-in-production")
-DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-change-in-production')
 
-ALLOWED_HOSTS = os.getenv(
-    "DJANGO_ALLOWED_HOSTS",
-    "app.kitagli.com,kitagli.com,localhost,127.0.0.1"
-).split(",")
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-CSRF_TRUSTED_ORIGINS = os.getenv(
-    "CSRF_TRUSTED_ORIGINS",
-    "https://app.kitagli.com,https://kitagli.com,http://localhost:8000"
-).split(",")
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-# APPLICATIONS
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -31,11 +29,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
-    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -64,44 +62,88 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# DATABASE - Conecta a la BD maestra tenant_master
+# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', 'tenant_master'),
-        'USER': os.getenv('PGUSER', 'admin'),
-        'PASSWORD': os.getenv('PGPASSWORD', '1234'),
-        'HOST': os.getenv('PGHOST', 'postgres16'),
-        'PORT': os.getenv('PGPORT', '5432'),
+        'NAME': os.getenv('DB_NAME', 'tenant_master'),
+        'USER': os.getenv('DB_USER', 'tenant_admin'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
+        'HOST': os.getenv('DB_HOST', 'postgres16'),
+        'PORT': os.getenv('DB_PORT', '5432'),
         'CONN_MAX_AGE': 60,
+        'OPTIONS': {
+            'connect_timeout': 10,
+        }
     }
 }
 
-# PASSWORD VALIDATION
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
-# INTERNATIONALIZATION
+# Internationalization
 LANGUAGE_CODE = 'es'
-TIME_ZONE = 'America/Lima'
+TIME_ZONE = os.getenv('TZ', 'America/Lima')
 USE_I18N = True
 USE_TZ = True
 
-# STATIC FILES
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = []
 
-# AUTH
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Static files storage
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Tenant configuration
+TENANT_DOMAIN = os.getenv('TENANT_DOMAIN', 'kitagli.com')
+
+# PostgreSQL Master Credentials (para crear BDs de tenants)
+POSTGRES_MASTER_USER = os.getenv('POSTGRES_MASTER_USER', 'postgres')
+POSTGRES_MASTER_PASSWORD = os.getenv('POSTGRES_MASTER_PASSWORD', '')
+POSTGRES_MASTER_HOST = os.getenv('DB_HOST', 'postgres16')
+POSTGRES_MASTER_PORT = os.getenv('DB_PORT', '5432')
+
+# Login configuration
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Messages
+from django.contrib.messages import constants as messages
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'error',
+}
 
-# TENANT CONFIGURATION
-TENANT_DOMAIN = os.getenv('TENANT_DOMAIN', 'kitagli.com')
+# Security settings for production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'

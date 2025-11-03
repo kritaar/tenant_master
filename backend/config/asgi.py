@@ -1,5 +1,5 @@
 """
-ASGI config for tenant-master project.
+ASGI config for config project.
 """
 
 import os

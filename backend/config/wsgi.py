@@ -1,5 +1,5 @@
 """
-WSGI config for tenant-master project.
+WSGI config for config project.
 """
 
 import os
