@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from decouple import config, Csv
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -53,20 +54,30 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB', default='tenant_master'),
-        'USER': config('POSTGRES_USER', default='tenant_admin'),
-        'PASSWORD': config('POSTGRES_PASSWORD'),
-        'HOST': config('POSTGRES_HOST', default='postgres'),
-        'PORT': config('POSTGRES_PORT', default='5432'),
-        'CONN_MAX_AGE': 60,
-        'OPTIONS': {
-            'connect_timeout': 10,
-        },
+# Database configuration - prioriza DATABASE_URL si existe
+if config('DATABASE_URL', default=None):
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=config('DATABASE_URL'),
+            conn_max_age=60,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('POSTGRES_DB', default='tenant_master'),
+            'USER': config('POSTGRES_USER', default='tenant_admin'),
+            'PASSWORD': config('POSTGRES_PASSWORD', default='postgres'),
+            'HOST': config('POSTGRES_HOST', default='postgres'),
+            'PORT': config('POSTGRES_PORT', default='5432'),
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {
+                'connect_timeout': 10,
+            },
+        }
+    }
 
 DATABASE_ROUTERS = ['panel.routers.TenantRouter']
 
