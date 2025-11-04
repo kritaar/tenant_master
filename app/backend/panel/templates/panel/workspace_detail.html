@@ -1,0 +1,55 @@
+{% extends 'panel/base.html' %}
+
+{% block title %}Detalle Workspace{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">{{ tenant.company_name }}</h1>
+    <p class="text-gray-600 mt-2">Workspace {{ tenant.subdomain }}</p>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h2 class="text-xl font-semibold mb-4">Información</h2>
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <p class="text-gray-600">Subdominio</p>
+            <p class="font-semibold">{{ tenant.subdomain }}</p>
+        </div>
+        <div>
+            <p class="text-gray-600">URL</p>
+            <p class="font-semibold"><a href="{{ tenant.url }}" target="_blank" class="text-indigo-600">{{ tenant.url }}</a></p>
+        </div>
+        <div>
+            <p class="text-gray-600">Base de datos</p>
+            <p class="font-semibold">{{ tenant.db_name }}</p>
+        </div>
+        <div>
+            <p class="text-gray-600">Estado</p>
+            <p class="font-semibold">{{ tenant.get_status_display }}</p>
+        </div>
+        <div>
+            <p class="text-gray-600">Tipo</p>
+            <p class="font-semibold">{{ tenant.get_type_display }}</p>
+        </div>
+        <div>
+            <p class="text-gray-600">Plan</p>
+            <p class="font-semibold">{{ tenant.get_plan_display }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold mb-4">Actividad Reciente</h2>
+    <div class="space-y-3">
+        {% for log in activity %}
+        <div class="border-b py-2">
+            <p class="font-semibold">{{ log.get_action_display }}</p>
+            <p class="text-sm text-gray-600">{{ log.description }}</p>
+            <p class="text-xs text-gray-400">{{ log.created_at|timesince }} ago</p>
+        </div>
+        {% empty %}
+        <p class="text-gray-500">No hay actividad</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

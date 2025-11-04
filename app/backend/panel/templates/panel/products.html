@@ -1,0 +1,27 @@
+{% extends 'panel/base.html' %}
+
+{% block title %}Productos{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Productos</h1>
+    <p class="text-gray-600 mt-2">Aplicaciones disponibles</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    {% for product in products %}
+    <div class="bg-white rounded-lg shadow p-6 text-center">
+        <div class="text-5xl mb-4">{{ product.icon }}</div>
+        <h3 class="font-bold text-lg">{{ product.display_name }}</h3>
+        <p class="text-gray-600 text-sm mt-2">{{ product.description|default:"" }}</p>
+        <span class="inline-block mt-4 px-3 py-1 text-xs rounded-full {% if product.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+            {% if product.is_active %}Activo{% else %}Inactivo{% endif %}
+        </span>
+    </div>
+    {% empty %}
+    <div class="col-span-4 bg-white rounded-lg shadow p-6 text-center text-gray-500">
+        No hay productos
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'panel/base.html' %}
+
+{% block title %}Configuración{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Configuración</h1>
+    <p class="text-gray-600 mt-2">Configuración del sistema</p>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold mb-4">Dominios</h2>
+    <div class="space-y-3">
+        <div>
+            <p class="text-gray-600">Panel Domain</p>
+            <p class="font-semibold">{{ panel_domain }}</p>
+        </div>
+        <div>
+            <p class="text-gray-600">Base Domain</p>
+            <p class="font-semibold">{{ base_domain }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6 mt-6">
+    <h2 class="text-xl font-semibold mb-4">Integraciones</h2>
+    <div class="space-y-3">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="font-semibold">Portainer</p>
+                <p class="text-sm text-gray-600">Gestión de contenedores</p>
+            </div>
+            <span class="px-3 py-1 text-xs rounded-full {% if portainer_configured %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                {% if portainer_configured %}Configurado{% else %}No configurado{% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+{% endblock %}
