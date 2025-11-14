@@ -6,61 +6,294 @@
 <div class="mb-8 flex justify-between items-center">
     <div>
         <h1 class="text-3xl font-bold text-gray-900">Workspaces</h1>
-        <p class="text-gray-600 mt-2">Gestiona todos los workspaces</p>
+        <p class="text-gray-600 mt-2">Gestiona todos los workspaces del sistema</p>
     </div>
-    <a href="{% url 'create_workspace' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg">
+    <a href="{% url 'create_workspace' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg shadow-lg transition">
         <i class="fas fa-plus mr-2"></i>Nuevo Workspace
     </a>
 </div>
 
-<div class="bg-white rounded-lg shadow overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Empresa</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subdominio</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-            </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-            {% for tenant in tenants %}
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ tenant.company_name }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ tenant.subdomain }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ tenant.product.icon }} {{ tenant.product.display_name }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">{{ tenant.get_plan_display }}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-1 text-xs rounded-full {% if tenant.type == 'shared' %}bg-blue-100 text-blue-800{% else %}bg-purple-100 text-purple-800{% endif %}">
-                        {{ tenant.get_type_display }}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 py-1 text-xs rounded-full {% if tenant.status == 'active' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                        {{ tenant.get_status_display }}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <a href="{% url 'workspace_detail' tenant.id %}" class="text-indigo-600 hover:text-indigo-900">Ver</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="7" class="px-6 py-4 text-center text-gray-500">No hay workspaces</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<!-- Filtros -->
+<div class="bg-white rounded-lg shadow p-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <input type="text" id="searchInput" placeholder="Buscar por nombre o subdominio..." 
+                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+            <select id="filterType" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                <option value="">Todos los tipos</option>
+                <option value="shared">Compartido</option>
+                <option value="dedicated">Dedicado</option>
+            </select>
+        </div>
+        <div>
+            <select id="filterStatus" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                <option value="">Todos los estados</option>
+                <option value="active">Activo</option>
+                <option value="suspended">Suspendido</option>
+                <option value="inactive">Inactivo</option>
+            </select>
+        </div>
+        <div>
+            <select id="filterProduct" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                <option value="">Todos los productos</option>
+                {% for product in products %}
+                <option value="{{ product.id }}">{{ product.display_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
 </div>
+
+<!-- Tabla de Workspaces -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Workspace
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Producto
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        URL
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Plan
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tipo
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Estado
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Creado
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="workspacesTable">
+                {% for tenant in tenants %}
+                <tr class="hover:bg-gray-50 transition workspace-row" 
+                    data-type="{{ tenant.type }}" 
+                    data-status="{{ tenant.status }}"
+                    data-product="{{ tenant.product.id }}"
+                    data-search="{{ tenant.company_name|lower }} {{ tenant.subdomain|lower }}">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="text-2xl mr-3">{{ tenant.product.icon|default:"📦" }}</div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ tenant.company_name }}</div>
+                                <div class="text-sm text-gray-500">{{ tenant.owner.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ tenant.product.display_name }}</div>
+                        <div class="text-xs text-gray-500">{{ tenant.product.name }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <a href="https://{{ tenant.subdomain }}.surgir.online" target="_blank" 
+                           class="text-sm text-indigo-600 hover:text-indigo-900">
+                            {{ tenant.subdomain }}.surgir.online
+                            <i class="fas fa-external-link-alt text-xs ml-1"></i>
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                            {% if tenant.plan == 'free' %}bg-gray-100 text-gray-800
+                            {% elif tenant.plan == 'starter' %}bg-blue-100 text-blue-800
+                            {% elif tenant.plan == 'professional' %}bg-purple-100 text-purple-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ tenant.get_plan_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                            {% if tenant.type == 'shared' %}bg-blue-100 text-blue-800
+                            {% else %}bg-purple-100 text-purple-800{% endif %}">
+                            {{ tenant.get_type_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                            {% if tenant.status == 'active' %}bg-green-100 text-green-800
+                            {% elif tenant.status == 'suspended' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ tenant.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ tenant.created_at|date:"d/m/Y" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex items-center justify-end space-x-2">
+                            <a href="{% url 'workspace_detail' tenant.id %}" 
+                               class="text-indigo-600 hover:text-indigo-900" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'edit_workspace' tenant.id %}" 
+                               class="text-blue-600 hover:text-blue-900" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if tenant.status == 'active' %}
+                            <button onclick="confirmAction({{ tenant.id }}, 'suspend', '{{ tenant.company_name }}')" 
+                                    class="text-yellow-600 hover:text-yellow-900" title="Suspender">
+                                <i class="fas fa-pause"></i>
+                            </button>
+                            {% elif tenant.status == 'suspended' %}
+                            <button onclick="confirmAction({{ tenant.id }}, 'activate', '{{ tenant.company_name }}')" 
+                                    class="text-green-600 hover:text-green-900" title="Activar">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            {% endif %}
+                            <button onclick="confirmAction({{ tenant.id }}, 'delete', '{{ tenant.company_name }}')" 
+                                    class="text-red-600 hover:text-red-900" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-lg font-medium">No hay workspaces creados</p>
+                            <p class="text-sm text-gray-400 mt-2">Comienza creando tu primer workspace</p>
+                            <a href="{% url 'create_workspace' %}" 
+                               class="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+                                <i class="fas fa-plus mr-2"></i>Crear Workspace
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div id="confirmModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900" id="modalTitle"></h3>
+            <p class="mt-2 text-sm text-gray-500" id="modalMessage"></p>
+            <div class="mt-4 flex space-x-3">
+                <button onclick="executeAction()" 
+                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg" 
+                        id="confirmButton">
+                    Confirmar
+                </button>
+                <button onclick="closeModal()" 
+                        class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentAction = null;
+
+// Filtros
+document.getElementById('searchInput').addEventListener('input', filterTable);
+document.getElementById('filterType').addEventListener('change', filterTable);
+document.getElementById('filterStatus').addEventListener('change', filterTable);
+document.getElementById('filterProduct').addEventListener('change', filterTable);
+
+function filterTable() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const typeFilter = document.getElementById('filterType').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+    const productFilter = document.getElementById('filterProduct').value;
+    
+    const rows = document.querySelectorAll('.workspace-row');
+    
+    rows.forEach(row => {
+        const searchText = row.dataset.search;
+        const type = row.dataset.type;
+        const status = row.dataset.status;
+        const product = row.dataset.product;
+        
+        const matchesSearch = searchText.includes(searchTerm);
+        const matchesType = !typeFilter || type === typeFilter;
+        const matchesStatus = !statusFilter || status === statusFilter;
+        const matchesProduct = !productFilter || product === productFilter;
+        
+        if (matchesSearch && matchesType && matchesStatus && matchesProduct) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function confirmAction(tenantId, action, companyName) {
+    currentAction = { tenantId, action };
+    const modal = document.getElementById('confirmModal');
+    const title = document.getElementById('modalTitle');
+    const message = document.getElementById('modalMessage');
+    const button = document.getElementById('confirmButton');
+    
+    switch(action) {
+        case 'suspend':
+            title.textContent = '¿Suspender workspace?';
+            message.textContent = `¿Estás seguro de suspender "${companyName}"? Los usuarios no podrán acceder.`;
+            button.className = 'flex-1 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg';
+            break;
+        case 'activate':
+            title.textContent = '¿Activar workspace?';
+            message.textContent = `¿Estás seguro de activar "${companyName}"?`;
+            button.className = 'flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg';
+            break;
+        case 'delete':
+            title.textContent = '¿Eliminar workspace?';
+            message.textContent = `¿Estás seguro de eliminar "${companyName}"? Esta acción no se puede deshacer.`;
+            button.className = 'flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg';
+            break;
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('confirmModal').classList.add('hidden');
+    currentAction = null;
+}
+
+function executeAction() {
+    if (!currentAction) return;
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/workspaces/${currentAction.tenantId}/action/`;
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    form.innerHTML = `
+        <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+        <input type="hidden" name="action" value="${currentAction.action}">
+    `;
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+</script>
+
+{% csrf_token %}
 {% endblock %}

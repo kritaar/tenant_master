@@ -1,0 +1,221 @@
+{% extends 'panel/base.html' %}
+
+{% block title %}Editar Workspace - {{ tenant.company_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-center space-x-4">
+        <a href="{% url 'workspace_detail' tenant.id %}" class="text-gray-600 hover:text-gray-900">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Editar Workspace</h1>
+            <p class="text-gray-600 mt-2">{{ tenant.company_name }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Formulario -->
+    <div class="lg:col-span-2">
+        <form method="post" class="bg-white rounded-lg shadow p-6">
+            {% csrf_token %}
+            
+            <!-- Información Básica -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Información Básica</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre de la Empresa <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="company_name" 
+                               value="{{ tenant.company_name }}"
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500" 
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Subdominio
+                        </label>
+                        <div class="relative">
+                            <input type="text" 
+                                   value="{{ tenant.subdomain }}"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 cursor-not-allowed" 
+                                   disabled>
+                            <span class="absolute right-3 top-2 text-sm text-gray-500">.surgir.online</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">El subdominio no se puede modificar</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuración del Producto -->
+            <div class="mb-6 border-t pt-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Configuración</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Producto
+                        </label>
+                        <div class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100">
+                            {{ tenant.product.icon }} {{ tenant.product.display_name }}
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">El producto no se puede modificar</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Plan <span class="text-red-500">*</span>
+                        </label>
+                        <select name="plan" 
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                            <option value="free" {% if tenant.plan == 'free' %}selected{% endif %}>🆓 Gratuito</option>
+                            <option value="starter" {% if tenant.plan == 'starter' %}selected{% endif %}>🚀 Starter</option>
+                            <option value="professional" {% if tenant.plan == 'professional' %}selected{% endif %}>💼 Profesional</option>
+                            <option value="enterprise" {% if tenant.plan == 'enterprise' %}selected{% endif %}>🏢 Enterprise</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Máximo de Usuarios
+                        </label>
+                        <input type="number" 
+                               name="max_users" 
+                               value="{{ tenant.max_users }}"
+                               min="1"
+                               max="1000"
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Límite de Almacenamiento (GB)
+                        </label>
+                        <input type="number" 
+                               name="storage_limit_gb" 
+                               value="{{ tenant.storage_limit_gb }}"
+                               min="1"
+                               max="1000"
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tipo de Deployment (solo info) -->
+            <div class="mb-6 border-t pt-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Tipo de Deployment</h2>
+                
+                <div class="p-4 border-2 {% if tenant.type == 'shared' %}border-blue-200 bg-blue-50{% else %}border-purple-200 bg-purple-50{% endif %} rounded-lg">
+                    <div class="flex items-center">
+                        {% if tenant.type == 'shared' %}
+                        <i class="fas fa-share-nodes text-blue-600 text-xl mr-3"></i>
+                        <div>
+                            <span class="font-semibold text-gray-900">Compartido (Shared)</span>
+                            <p class="text-sm text-gray-600 mt-1">
+                                Este workspace usa una aplicación compartida con base de datos aislada
+                            </p>
+                        </div>
+                        {% else %}
+                        <i class="fas fa-server text-purple-600 text-xl mr-3"></i>
+                        <div>
+                            <span class="font-semibold text-gray-900">Dedicado (Dedicated)</span>
+                            <p class="text-sm text-gray-600 mt-1">
+                                Este workspace tiene su propia copia de la aplicación
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">El tipo de deployment no se puede modificar después de la creación</p>
+            </div>
+
+            <!-- Usuario Propietario -->
+            <div class="mb-6 border-t pt-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Usuario Propietario</h2>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Propietario <span class="text-red-500">*</span>
+                    </label>
+                    <select name="owner_id" 
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500" 
+                            required>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if user.id == tenant.owner.id %}selected{% endif %}>
+                            {{ user.username }} 
+                            {% if user.email %}({{ user.email }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-between border-t pt-6">
+                <a href="{% url 'workspace_detail' tenant.id %}" 
+                   class="text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                </a>
+                <button type="submit" 
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg shadow-lg transition">
+                    <i class="fas fa-save mr-2"></i>Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Panel de Info -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow p-6 sticky top-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-info-circle text-indigo-600 mr-2"></i>
+                Información del Workspace
+            </h3>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Estado:</span>
+                    <span class="px-2 py-1 text-xs rounded-full 
+                        {% if tenant.status == 'active' %}bg-green-100 text-green-800
+                        {% elif tenant.status == 'suspended' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ tenant.get_status_display }}
+                    </span>
+                </div>
+                
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Creado:</span>
+                    <span class="text-gray-900">{{ tenant.created_at|date:"d/m/Y" }}</span>
+                </div>
+                
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Última actualización:</span>
+                    <span class="text-gray-900">{{ tenant.updated_at|date:"d/m/Y H:i" }}</span>
+                </div>
+
+                {% if tenant.project_path %}
+                <div class="border-t pt-3 mt-3">
+                    <span class="text-xs text-gray-600">Ruta del proyecto:</span>
+                    <code class="block text-xs bg-gray-100 p-2 rounded mt-1 break-all">
+                        {{ tenant.project_path }}
+                    </code>
+                </div>
+                {% endif %}
+
+                <div class="border-t pt-3 mt-3">
+                    <span class="text-xs text-gray-600">Base de datos:</span>
+                    <code class="block text-xs bg-gray-100 p-2 rounded mt-1">
+                        {{ tenant.db_name }}
+                    </code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

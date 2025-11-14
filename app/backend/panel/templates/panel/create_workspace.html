@@ -1,49 +1,254 @@
 {% extends 'panel/base.html' %}
-{% block title %}Crear Workspace{% endblock %}
+
+{% block title %}Crear Workspace - Tenant Master{% endblock %}
+
 {% block content %}
-<h1 class="text-3xl font-bold mb-8">Crear Nuevo Workspace</h1>
-<form method="post" class="bg-white rounded-lg shadow p-6 max-w-2xl">
-{% csrf_token %}
-<div class="mb-4">
-<label class="block text-gray-700 mb-2">Nombre de la Empresa</label>
-<input type="text" name="company_name" class="w-full border rounded px-3 py-2" required>
+<div class="mb-8">
+    <div class="flex items-center space-x-4">
+        <a href="{% url 'workspaces' %}" class="text-gray-600 hover:text-gray-900">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Crear Nuevo Workspace</h1>
+            <p class="text-gray-600 mt-2">Configura un nuevo workspace para un cliente</p>
+        </div>
+    </div>
 </div>
-<div class="mb-4">
-<label class="block text-gray-700 mb-2">Subdominio</label>
-<input type="text" name="subdomain" class="w-full border rounded px-3 py-2" required>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Formulario -->
+    <div class="lg:col-span-2">
+        <form method="post" class="bg-white rounded-lg shadow p-6">
+            {% csrf_token %}
+            
+            <!-- Información Básica -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Información Básica</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre de la Empresa <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="company_name" 
+                               class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500" 
+                               placeholder="Ej: Mi Empresa SAC"
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Subdominio <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input type="text" 
+                                   name="subdomain" 
+                                   id="subdomain"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500" 
+                                   placeholder="miempresa"
+                                   pattern="[a-z0-9-]+"
+                                   required>
+                            <span class="absolute right-3 top-2 text-sm text-gray-500">.surgir.online</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Solo letras minúsculas, números y guiones</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuración del Producto -->
+            <div class="mb-6 border-t pt-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Configuración del Producto</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Producto <span class="text-red-500">*</span>
+                        </label>
+                        <select name="product" 
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500" 
+                                required>
+                            <option value="">Seleccionar producto...</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}">{{ product.icon }} {{ product.display_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Plan <span class="text-red-500">*</span>
+                        </label>
+                        <select name="plan" 
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                            <option value="free">🆓 Gratuito</option>
+                            <option value="starter">🚀 Starter</option>
+                            <option value="professional">💼 Profesional</option>
+                            <option value="enterprise">🏢 Enterprise</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tipo de Deployment -->
+            <div class="mb-6 border-t pt-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Tipo de Deployment</h2>
+                
+                <div class="space-y-4">
+                    <label class="relative flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition">
+                        <input type="radio" 
+                               name="type" 
+                               value="shared" 
+                               class="mt-1 mr-4"
+                               checked>
+                        <div class="flex-1">
+                            <div class="flex items-center">
+                                <i class="fas fa-share-nodes text-blue-600 text-xl mr-2"></i>
+                                <span class="font-semibold text-gray-900">Compartido (Shared)</span>
+                                <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Recomendado</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">
+                                El workspace usará la misma aplicación que otros clientes, pero con su base de datos completamente aislada. 
+                                Ideal para la mayoría de casos.
+                            </p>
+                            <ul class="text-xs text-gray-500 mt-2 space-y-1">
+                                <li>✅ Base de datos propia y aislada</li>
+                                <li>✅ Despliegue instantáneo</li>
+                                <li>✅ Menor costo de recursos</li>
+                                <li>✅ Misma aplicación, datos separados</li>
+                            </ul>
+                        </div>
+                    </label>
+
+                    <label class="relative flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-500 transition">
+                        <input type="radio" 
+                               name="type" 
+                               value="dedicated" 
+                               class="mt-1 mr-4">
+                        <div class="flex-1">
+                            <div class="flex items-center">
+                                <i class="fas fa-server text-purple-600 text-xl mr-2"></i>
+                                <span class="font-semibold text-gray-900">Dedicado (Dedicated)</span>
+                                <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Avanzado</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">
+                                Crea una copia completa del código en una carpeta exclusiva con su propio contenedor Docker. 
+                                Para clientes enterprise o personalizaciones.
+                            </p>
+                            <ul class="text-xs text-gray-500 mt-2 space-y-1">
+                                <li>✅ Código completamente aislado</li>
+                                <li>✅ Contenedor Docker propio</li>
+                                <li>✅ Posibilidad de personalizaciones</li>
+                                <li>✅ Control total del deployment</li>
+                            </ul>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Usuario Propietario -->
+            <div class="mb-6 border-t pt-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Usuario Propietario</h2>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Propietario <span class="text-red-500">*</span>
+                    </label>
+                    <select name="owner_username" 
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500" 
+                            required>
+                        <option value="">Seleccionar usuario...</option>
+                        {% for user in users %}
+                        <option value="{{ user.username }}">
+                            {{ user.username }} 
+                            {% if user.email %}({{ user.email }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Usuario que tendrá acceso administrativo al workspace
+                    </p>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-between border-t pt-6">
+                <a href="{% url 'workspaces' %}" 
+                   class="text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                </a>
+                <button type="submit" 
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg shadow-lg transition">
+                    <i class="fas fa-check mr-2"></i>Crear Workspace
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Panel de Ayuda -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow p-6 sticky top-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-info-circle text-indigo-600 mr-2"></i>
+                Ayuda
+            </h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-2">¿Qué es un Workspace?</h4>
+                    <p class="text-sm text-gray-600">
+                        Un workspace es un espacio de trabajo aislado para un cliente, con su propia base de datos y configuración.
+                    </p>
+                </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Subdominio</h4>
+                    <p class="text-sm text-gray-600">
+                        El subdominio será la URL de acceso:
+                        <code class="bg-gray-100 px-2 py-1 rounded text-xs">cliente.surgir.online</code>
+                    </p>
+                </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Compartido vs Dedicado</h4>
+                    <p class="text-sm text-gray-600 mb-2">
+                        <strong>Compartido:</strong> Múltiples clientes usan la misma app, pero con datos separados.
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        <strong>Dedicado:</strong> El cliente tiene su propia copia de la aplicación.
+                    </p>
+                </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Base de Datos</h4>
+                    <p class="text-sm text-gray-600">
+                        Cada workspace tiene su propia base de datos PostgreSQL completamente aislada.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div class="mb-4">
-<label class="block text-gray-700 mb-2">Producto</label>
-<select name="product" class="w-full border rounded px-3 py-2" required>
-{% for product in products %}
-<option value="{{ product.id }}">{{ product.icon }} {{ product.display_name }}</option>
-{% endfor %}
-</select>
-</div>
-<div class="mb-4">
-<label class="block text-gray-700 mb-2">Plan</label>
-<select name="plan" class="w-full border rounded px-3 py-2">
-<option value="free">Gratuito</option>
-<option value="starter">Starter</option>
-<option value="professional">Profesional</option>
-<option value="enterprise">Enterprise</option>
-</select>
-</div>
-<div class="mb-4">
-<label class="block text-gray-700 mb-2">Tipo</label>
-<select name="type" class="w-full border rounded px-3 py-2">
-<option value="shared">Compartido</option>
-<option value="dedicated">Dedicado</option>
-</select>
-</div>
-<div class="mb-4">
-<label class="block text-gray-700 mb-2">Usuario Propietario</label>
-<select name="owner_username" class="w-full border rounded px-3 py-2" required>
-{% for user in users %}
-<option value="{{ user.username }}">{{ user.username }}</option>
-{% endfor %}
-</select>
-</div>
-<button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700">Crear Workspace</button>
-</form>
+
+<script>
+// Convertir subdomain a minúsculas y remover caracteres inválidos
+document.getElementById('subdomain').addEventListener('input', function(e) {
+    this.value = this.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+});
+
+// Auto-generar subdomain desde company_name
+document.querySelector('[name="company_name"]').addEventListener('input', function(e) {
+    const subdomain = document.getElementById('subdomain');
+    if (!subdomain.value) {
+        const generated = this.value
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .substring(0, 20);
+        subdomain.value = generated;
+    }
+});
+</script>
 {% endblock %}

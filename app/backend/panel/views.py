@@ -175,6 +175,53 @@ def create_workspace(request):
 
 @login_required
 @user_passes_test(is_superuser)
+def edit_workspace(request, tenant_id):
+    """Editar un workspace existente"""
+    try:
+        tenant = get_object_or_404(Tenant, id=tenant_id)
+        
+        if request.method == 'POST':
+            # Actualizar campos editables
+            tenant.company_name = request.POST.get('company_name')
+            tenant.plan = request.POST.get('plan')
+            tenant.max_users = int(request.POST.get('max_users', 5))
+            tenant.storage_limit_gb = int(request.POST.get('storage_limit_gb', 10))
+            
+            # Actualizar owner si cambió
+            new_owner_id = request.POST.get('owner_id')
+            if new_owner_id:
+                tenant.owner = User.objects.get(id=new_owner_id)
+            
+            tenant.save()
+            
+            # Log
+            ActivityLog.objects.create(
+                tenant=tenant,
+                user=request.user,
+                action='update',
+                description=f'Workspace {tenant.company_name} actualizado',
+                ip_address=get_client_ip(request)
+            )
+            
+            messages.success(request, f'Workspace {tenant.company_name} actualizado exitosamente')
+            return redirect('workspace_detail', tenant_id=tenant.id)
+        
+        # GET request
+        users = User.objects.filter(is_active=True)
+        
+        context = {
+            'tenant': tenant,
+            'users': users,
+        }
+        return render(request, 'panel/edit_workspace.html', context)
+        
+    except Exception as e:
+        messages.error(request, f'Error al editar workspace: {str(e)}')
+        return redirect('workspaces')
+
+
+@login_required
+@user_passes_test(is_superuser)
 def workspace_detail(request, tenant_id):
     """Detalle de un workspace"""
     try:
