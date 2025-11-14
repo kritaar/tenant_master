@@ -9,6 +9,7 @@ class Product(models.Model):
     icon = models.CharField(max_length=10, default='📦')
     docker_image = models.CharField(max_length=200, blank=True)
     template_path = models.CharField(max_length=255, blank=True, help_text="Path en /opt/proyectos/")
+    github_repo_url = models.CharField(max_length=500, blank=True, help_text="URL del repositorio GitHub del código base")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

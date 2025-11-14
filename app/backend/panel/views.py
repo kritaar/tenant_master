@@ -152,6 +152,32 @@ def create_workspace(request):
             # Crear usuario admin en la tabla master del producto
             ensure_super_admin_in_product(product.name, request.user)
             
+            # Si es SHARED, verificar/inicializar repositorio base del producto
+            if workspace_type == 'shared':
+                try:
+                    # Verificar si ya existe el repo
+                    if not product.github_repo_url:
+                        # Inicializar repo base del producto
+                        repo_result = initialize_product_repo(product.name)
+                        
+                        if repo_result.get('success'):
+                            # Actualizar producto con URL del repo
+                            product.github_repo_url = repo_result.get('repo_url', '')
+                            product.template_path = repo_result.get('path', '')
+                            product.save()
+                            
+                            # Actualizar tenant con info del repo
+                            tenant.git_repo_url = product.github_repo_url
+                            tenant.save()
+                            
+                            messages.success(request, f'Repositorio base inicializado: {product.github_repo_url}')
+                    else:
+                        # Repo ya existe, solo asignar
+                        tenant.git_repo_url = product.github_repo_url
+                        tenant.save()
+                except Exception as e:
+                    messages.warning(request, f'No se pudo inicializar repositorio: {str(e)}')
+            
             # Si es dedicado, ejecutar deployment automático
             if workspace_type == 'dedicated':
                 try:
@@ -691,6 +717,50 @@ def deploy_dedicated_workspace(product_name, subdomain, db_name, db_user, db_pas
         return {
             'success': False,
             'error': 'Deployment timeout (>5 min)'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+
+def initialize_product_repo(product_name):
+    """Inicializa repositorio base para productos SHARED"""
+    try:
+        script_path = '/app/infra/scripts/initialize_product_repo.py'
+        
+        result = subprocess.run(
+            ['python3', script_path, product_name],
+            capture_output=True,
+            text=True,
+            timeout=120  # 2 minutos timeout
+        )
+        
+        # Extraer JSON del output
+        output_lines = result.stdout.split('\n')
+        json_start = False
+        json_output = []
+        
+        for line in output_lines:
+            if '=== RESULT ===' in line:
+                json_start = True
+                continue
+            if json_start and line.strip():
+                json_output.append(line)
+        
+        if json_output:
+            return json.loads(''.join(json_output))
+        else:
+            return {
+                'success': False,
+                'error': 'No se pudo parsear el resultado'
+            }
+            
+    except subprocess.TimeoutExpired:
+        return {
+            'success': False,
+            'error': 'Timeout al inicializar repositorio'
         }
     except Exception as e:
         return {
