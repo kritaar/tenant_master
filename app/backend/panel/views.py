@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.conf import settings
 from django.db.models import Count, Q
-from .models import Tenant, Product, TenantUser, ActivityLog, Deployment
+from .models import Tenant, Product, TenantUser, ActivityLog
 from django.contrib.auth.models import User
 import requests
 import subprocess
