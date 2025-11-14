@@ -1,39 +1,138 @@
 {% extends 'panel/base.html' %}
 
-{% block title %}Deployments{% endblock %}
+{% block title %}Deployments - Tenant Master{% endblock %}
 
 {% block content %}
-<div class="mb-8 flex justify-between items-center">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">Deployments</h1>
-        <p class="text-gray-600 mt-2">Gestión de stacks en Portainer</p>
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Deployments</h1>
+            <p class="text-gray-600 mt-2">Gestión de deployments dedicados y compartidos</p>
+        </div>
     </div>
-    {% if portainer_configured %}
-    <form method="post" action="{% url 'sync_deployments' %}">
-        {% csrf_token %}
-        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
-            Sincronizar
-        </button>
-    </form>
-    {% endif %}
 </div>
 
-{% if portainer_configured %}
-<div class="grid gap-4">
-    {% for stack in stacks %}
-    <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="font-bold text-lg">{{ stack.Name }}</h3>
-        <p class="text-gray-600">ID: {{ stack.Id }}</p>
+<!-- Deployments Compartidos -->
+<div class="bg-white rounded-lg shadow mb-6">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-share-nodes text-blue-600 mr-2"></i>
+                Deployments Compartidos
+            </h2>
+            <span class="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
+                {{ shared_products|length }} productos
+            </span>
+        </div>
     </div>
-    {% empty %}
-    <div class="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-        No hay stacks
+    <div class="p-6">
+        {% if shared_products %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for product in shared_products %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="text-3xl">{{ product.icon|default:"📦" }}</div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">{{ product.display_name }}</h3>
+                        <p class="text-sm text-gray-500">{{ product.name }}</p>
+                    </div>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Tenants:</span>
+                        <span class="font-semibold">{{ product.tenant_count|default:0 }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Tipo:</span>
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">Compartido</span>
+                    </div>
+                    {% if product.template_path %}
+                    <div class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-folder mr-1"></i>
+                        {{ product.template_path }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No hay productos configurados</p>
+        {% endif %}
     </div>
-    {% endfor %}
 </div>
-{% else %}
-<div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-    Portainer no está configurado. Configura PORTAINER_BASE y PORTAINER_API_KEY en variables de entorno.
+
+<!-- Deployments Dedicados -->
+<div class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-server text-purple-600 mr-2"></i>
+                Deployments Dedicados
+            </h2>
+            <span class="px-3 py-1 text-sm bg-purple-100 text-purple-800 rounded-full">
+                {{ dedicated_tenants|length }} activos
+            </span>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Workspace</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subdomain</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Path</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Creado</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for tenant in dedicated_tenants %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="text-2xl mr-3">{{ tenant.product.icon|default:"📦" }}</div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ tenant.company_name }}</div>
+                                <div class="text-sm text-gray-500">{{ tenant.owner.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-900">{{ tenant.product.display_name }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <a href="https://{{ tenant.subdomain }}.surgir.online" target="_blank" class="text-sm text-indigo-600 hover:text-indigo-900">
+                            {{ tenant.subdomain }}.surgir.online
+                            <i class="fas fa-external-link-alt text-xs ml-1"></i>
+                        </a>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs text-gray-500 font-mono">{{ tenant.project_path|default:"No configurado" }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full
+                            {% if tenant.status == 'active' %}bg-green-100 text-green-800
+                            {% elif tenant.status == 'suspended' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ tenant.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ tenant.created_at|date:"d/m/Y" }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                        No hay deployments dedicados creados
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
-{% endif %}
+
 {% endblock %}
