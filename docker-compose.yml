@@ -42,6 +42,8 @@ services:
       - PORTAINER_BASE=${PORTAINER_BASE}
       - PORTAINER_API_KEY=${PORTAINER_API_KEY}
       - PORTAINER_ENDPOINT_ID=${PORTAINER_ENDPOINT_ID}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_USERNAME=${GITHUB_USERNAME}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.panel.rule=Host(`${PANEL_DOMAIN}`)"
@@ -58,6 +60,7 @@ services:
     volumes:
       - panel_static:/app/staticfiles
       - panel_media:/app/media
+      - /opt/proyectos:/opt/proyectos
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]

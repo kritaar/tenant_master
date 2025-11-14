@@ -18,6 +18,8 @@ import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import secrets
 import string
+import subprocess
+import json
 
 
 def is_superuser(user):
@@ -145,6 +147,27 @@ def create_workspace(request):
             
             # Crear usuario admin en la tabla master del producto
             ensure_super_admin_in_product(product.name, request.user)
+            
+            # Si es dedicado, ejecutar deployment automático
+            if workspace_type == 'dedicated':
+                try:
+                    deploy_result = deploy_dedicated_workspace(
+                        product.name,
+                        subdomain,
+                        db_name,
+                        db_user,
+                        db_password
+                    )
+                    
+                    if deploy_result.get('success'):
+                        tenant.git_repo_url = deploy_result.get('repo_url', '')
+                        tenant.is_deployed = True
+                        tenant.save()
+                        messages.success(request, f'Workspace {company_name} desplegado exitosamente')
+                    else:
+                        messages.warning(request, f'Workspace creado pero deployment falló: {deploy_result.get("error")}')
+                except Exception as e:
+                    messages.warning(request, f'Workspace creado pero deployment falló: {str(e)}')
             
             ActivityLog.objects.create(
                 tenant=tenant,
@@ -545,3 +568,51 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+# ============================================
+# FUNCIONES AUXILIARES - DEPLOYMENT
+# ============================================
+
+def deploy_dedicated_workspace(product_name, subdomain, db_name, db_user, db_password):
+    """Ejecuta el script de deployment automático para workspaces dedicados"""
+    try:
+        script_path = '/app/infra/scripts/deploy_dedicated_workspace.py'
+        
+        result = subprocess.run(
+            ['python3', script_path, product_name, subdomain, db_name, db_user, db_password],
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 minutos timeout
+        )
+        
+        # Extraer JSON del output
+        output_lines = result.stdout.split('\n')
+        json_start = False
+        json_output = []
+        
+        for line in output_lines:
+            if '=== RESULT ===' in line:
+                json_start = True
+                continue
+            if json_start and line.strip():
+                json_output.append(line)
+        
+        if json_output:
+            return json.loads(''.join(json_output))
+        else:
+            return {
+                'success': False,
+                'error': 'No se pudo parsear el resultado del deployment'
+            }
+            
+    except subprocess.TimeoutExpired:
+        return {
+            'success': False,
+            'error': 'Deployment timeout (>5 min)'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
