@@ -114,8 +114,10 @@ def create_workspace(request):
             product = Product.objects.get(id=product_id)
             owner = User.objects.get(username=owner_username)
             
-            db_name = f"tenant_{subdomain}"
-            db_user = f"user_{subdomain}"
+            # Sanitizar subdomain para nombres de BD (reemplazar guiones por guiones bajos)
+            safe_subdomain = subdomain.replace('-', '_')
+            db_name = f"tenant_{safe_subdomain}"
+            db_user = f"user_{safe_subdomain}"
             db_password = generate_password()
             
             create_database(db_name, db_user, db_password)
